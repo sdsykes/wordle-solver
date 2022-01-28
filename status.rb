@@ -1,5 +1,5 @@
 class Status
-  attr_reader :letters
+  attr_accessor :letters
   attr_writer :possible_words_cache, :prev_possible_words
   
   def initialize
@@ -18,11 +18,12 @@ class Status
   
   def dup
     status = Status.new
-    $alphabet.each do |letter|
-      status.letters[letter] = @letters[letter].dup
-      status.letters[letter][:not_pos] = @letters[letter][:not_pos].dup
-      status.letters[letter][:right_pos] = @letters[letter][:right_pos].dup
-    end
+    status.letters = Marshal.load(Marshal.dump(@letters))
+#    $alphabet.each do |letter|
+#      status.letters[letter] = @letters[letter].dup
+#      status.letters[letter][:not_pos] = @letters[letter][:not_pos].dup
+#      status.letters[letter][:right_pos] = @letters[letter][:right_pos].dup
+#    end
     status.possible_words_cache = @possible_words_cache
     status.prev_possible_words = @prev_possible_words
     status
@@ -46,6 +47,7 @@ class Status
         @letters[c][:included] += 1
         @letters[c][:right_pos] |= [n]
       else
+        @letters[c][:not_pos] |= [n]
         @letters[c][:maxed] = true
       end
       n += 1
@@ -59,10 +61,6 @@ class Status
     
     @prev_possible_words = @possible_words_cache
     @possible_words_cache = nil
-  end
-  
-  def untried_letters
-    @letters.select {|letter, letter_status| !letter_status[:maxed] && letter_status[:included] == 0}.map(&:first)
   end
   
   def unused_letters
@@ -122,12 +120,7 @@ class Status
   def guessed_letters_count
     @letters.sum {|letter, letter_status| letter_status[:included]}
   end
-  
-  def elimination_needed?(words)
-    chars = words.join("").chars
-    (chars.uniq.count <= words.count + 4 || (open_positions.count <= 2 && guessed_letters_count == 4)) && words.count > 2
-  end
-  
+    
   def words_containing_letter_at_index(letter, index, words)
     words.select {|word| word[index] == letter}
   end
@@ -152,7 +145,7 @@ class Status
 #    found_words
   end
   
-  def possible_words_unordered
+  def _possible_words
     words = @prev_possible_words || $w_list
 
     letters_in_position.each do |letter, pos|
@@ -178,28 +171,13 @@ class Status
   end
   
   def possible_words_count
-    possible_words_unordered.count
+    _possible_words.count
   end
   
   # returns all possible words at this point, first in array is the best one to guess
   def possible_words
     return @possible_words_cache if @possible_words_cache
-    
-    words = possible_words_unordered
-    # order by words with most common unique chars
-    scores = {}
-    words.each do |word|
-      score = 0
-      word.each_char do |c|
-        words.each do |w|
-          score += 1 if w.include?(c)
-        end
-      end
-      score += words.count if word.chars.uniq.count == word.chars.count
-      scores[word] = score
-    end
-  
-    @possible_words_cache = scores.sort_by{|k, v| -v}.map{|w, s| w}
+    @possible_words_cache = _possible_words
   end
   
   def test(word, theword)

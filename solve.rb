@@ -22,37 +22,6 @@ $alphabet = ('a'..'z').to_a.freeze
 $initial_guess = "roate"
 # "arise" 116 #"roate" 79 #"aesir" 109 # "oater" 100 #"reais" 105 #"serai" 130 # "raise" 107
 
-def freq_of_letters(letters, in_words, in_positions = [0,1,2,3,4])
-  freqs = {}
-  letters.each do |letter|
-    freqs[letter] = 0
-  end
-  
-  letters.each do |letter|
-    in_words.each do |w|
-      in_positions.each do |op|
-        if w[op] == letter
-          freqs[letter] += 1
-          break
-        end
-      end
-    end
-  end
-  
-  freqs
-end
-
-def words_containing_letter(letter, words)
-  words.select {|w| w.include?(letter)}
-end
-
-def words_containing(letters, words)
-  found_words = words
-  letters.each do |letter|
-    found_words = words_containing_letter(letter, found_words)
-  end
-  found_words
-end
 
 def words_containing_letters_in(letters, words)
 #  words.grep(Regexp.new("[#{letters.join}]{5}")) # slower
@@ -61,76 +30,98 @@ def words_containing_letters_in(letters, words)
   end 
 end
 
-def words_containing_letter_at_index(letter, index, words)
-  words.select {|word| word[index] == letter}
-end
-
-def words_not_containing_letter_at_index(letter, index, words)
-  words.select {|word| word[index] != letter}
-end
-
-def words_containing_letter_in_positions(letter, positions, words)
-  words.select {|word| positions.any? {|index| word[index] == letter}}  
-end
-
-def initial_guess
-  return $initial_guess if $initial_guess
-  freqs = freq_of_letters($alphabet, $w_list)
-  top_letters = freqs.sort_by {|k, v| -v}
-  letters = top_letters[0..4].map(&:first)
-  $initial_guess = words_containing(letters, $full_list).first
-end
-
-def elimination_guess(status, prio_letters = nil)
-  poss_words = status.possible_words
-  freqs = freq_of_letters(status.untried_letters, poss_words, status.open_positions)
-  top_letters = freqs.sort_by {|k, v| -v}.map(&:first)
-  top_letters = prio_letters + top_letters if prio_letters
-  letters = top_letters[0..4]
-  words = words_containing(letters, $full_list)
-  sel = 5
-
-  while words.empty? && sel < top_letters.count
-    perms = top_letters[0..sel].combination(5) do |letters|
-      words = words_containing(letters, $full_list)
-      break unless words.empty?
-    end
-    sel += 1
-  end
-
-  words = poss_words if words.empty?
-  words.first
-end
-
 def ideal_guess(status)
   words = status.possible_words
   all_words_letters = words.map(&:chars).reduce(&:|)
   # make sure possible words are first in the list as they are more likely to succeed
-  extended_list = (words + words_containing_letters_in(all_words_letters | ["e","t"], $full_list)).uniq
+  extended_list = (words + words_containing_letters_in(all_words_letters | ["e","t","a","o","i"], $full_list)).uniq
+# e t
+#  2: 55
+#  3: 1119
+#  4: 1088
+#  5: 53
+#  6: 0
+# e t a
+#  2: 55
+#  3: 1120
+#  4: 1093
+#  5: 47
+#  6: 0
+# e t a o
+#  2: 55
+#. 3: 1120
+#. 4: 1094
+#. 5: 46
+#. 6: 0
+# e t a o i
+# 2: 55
+# 3: 1119
+# 4: 1096
+# 5: 45
+# 6: 0
+# e t a o i n
+#same
+# e t a o i n s
+#same
+# full
+# 2: 46
+# 3: 1056
+# 4: 1167
+# 5: 45
+# 6: 1
+# e t a o r
+# 2: 55
+# 3: 1120
+# 4: 1094
+# 5: 46
+
   scores = {}
   extended_list.each do |word|
     score = 0
     min = scores.values.min || words.count * words.count
+    groups = {}
     words.each do |answer_word|
-      _status = status.dup
+#      _status = status.dup
       result = status.test(word, answer_word)
-      _status.add_guess(word, result)
-      new_word_count = _status.possible_words_count
-      score += new_word_count
-      break if score > min
+      groups[result] ||= 0
+      groups[result] += 1
+#      _status.add_guess(word, result)
+#      new_word_count = _status.possible_words_count
+#      score += new_word_count
+#      break if score > min
     end
-    scores[word] = score
-    break if score <= words.count && words.include?(word)
+#    scores[word] = score
+    scores[word] = groups.values.sum{|v| v * v} #.to_f / groups.values.sum #- (words.include?(word) ? 0.01 : 0)
+
+#    break if score <= words.count && words.include?(word)
+
+    break if scores[word] <= words.count && words.include?(word)
   end
   best_score = scores.values.min
   best_words = scores.select {|k,v| v == best_score}.map {|t| t.first}
+  #  2: 56
+  #  3: 1122
+  #  4: 1084
+  #  5: 52
+  #  6: 1
   best_words = best_words.sort_by {|w| -w.chars.uniq.count}
-  best_words_that_are_a_possible = best_words & words
-  chosen_words = best_words_that_are_a_possible + best_words
+#    2: 55
+#    3: 1119
+#    4: 1088
+#    5: 53
+#    6: 0
 
-  puts "IDEAL #{scores.sort_by{|k,v| v}.map {|k,v| "#{k}:#{v}"}[0..9].join(" ")}"
-  chosen_words
-#best_words
+  best_words
+
+#  best_words_that_are_a_possible = best_words & words
+#  chosen_words = best_words_that_are_a_possible + best_words
+#    2: 56
+#    3: 1122
+#    4: 1083
+#    5: 54
+#    6: 0
+#  puts "IDEAL #{scores.sort_by{|k,v| v}.map {|k,v| "#{k}:#{v}"}[0..9].join(" ")}"
+#  chosen_words
 end
 
 
@@ -146,6 +137,10 @@ def do_guess(status, guess, theword, comment = nil)
   result
 end
 
+def cached(cache, status)
+  cache[status.hash] or cache[status.hash] = yield(status)
+end
+
 def run_word_list(w_list)
   stats = Stats.new
   cache = {} # speed up second guess
@@ -155,76 +150,22 @@ def run_word_list(w_list)
   
     # first guess, always the same
     guesses = 1
-    guess = initial_guess
+    guess = $initial_guess
     do_guess(status, guess, theword)
-    
-    # second guess to eliminate letters unless the first guess was super lucky
-    if false #status.guessed_letters_count < 4
-      guesses += 1
-      guess = cache[status.hash] || elimination_guess(status)
-      cache[status.hash] = guess
-      do_guess(status, guess, theword)
-    end
-    
+        
     result = "-----"
     while(result != "xxxxx") do
       guesses += 1
       words = status.possible_words
       
-      if cache[status.hash]
-        guess = cache[status.hash]
-      else
+      guess = cached(cache, status) do |status|
         if words.count > 2
-          guess = ideal_guess(status).first
+          ideal_guess(status).first
         else
-          guess = words.last
-
-          if words.count == 2
-            stats.bad_pairs << {theword => words}
-            differing_letters = []
-            a, b = words
-            0.upto(4){|n| differing_letters << n if a[n] != b[n]}
-            if differing_letters.count == 1
-              differing_letter = differing_letters[0]
-              if a[differing_letter].ord < b[differing_letter].ord
-                guess = words.first
-              end
-            end
-          end
-        end
-        cache[status.hash] = guess
-      end
-
-      # check whether to change strategy to eliminating letters
-      if false #status.elimination_needed?(words)
-        puts "ELIMINATE #{words.join(" ")}"
-        letters_known = (status.letters_not_in_position + status.letters_in_position).map(&:first)
-
-        letters_to_test = words.map do |word|
-          letters = letters_known.dup
-          word.chars.reject do |c|
-            i = letters.index(c)
-            letters.delete_at(i) if i
-            i
-          end
-        end.flatten.uniq
-        
-        all_words_letters = words.map(&:chars).reduce(&:&)
-        letters_to_test -= all_words_letters
-
-        if letters_to_test.count < 2
-#          puts "NOT ENOUGH LETTERS TO TEST"
-        else
-          elim_guess = elimination_guess(status, letters_to_test)
-  
-          if (elim_guess.split("") & letters_to_test).count > 1
-            guess = elim_guess 
-          else
-            puts "FAILED TO FIND ELIM WORD (#{elim_guess})"
-          end
+          words.last
         end
       end
-  
+
       if guess.nil? # this should never happen
         puts "NO WORDS LEFT (#{theword})"
         pp status.letters
