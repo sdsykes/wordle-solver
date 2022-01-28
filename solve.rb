@@ -1,15 +1,12 @@
-# 1:0.0% 2:0.9% 3:42.7% 4:43.0% 5:11.7% 6:1.7% 7:0.0% 8:0.0% 9:0.0% (2315 words)
-# {5=>272, 4=>995, 3=>989, 2=>20, 6=>39}
-# 1:0.0% 2:0.8% 3:40.1% 4:45.9% 5:12.0% 6:1.2% 7:0.0% 8:0.0% 9:0.0% (2315 words)
-# {5=>277, 4=>1063, 3=>929, 2=>19, 6=>27}
+# current best
 
-#1: 0
-#2: 54
-#3: 1113
-#4: 1091
-#5: 57
-#6: 0
-#Average guesses: 3.4971922246220304
+# 1: 0
+# 2: 55
+# 3: 1126
+# 4: 1093
+# 5: 41
+# 6: 0
+# Average guesses: 3.4838012958963285
 
 require './stats.rb'
 require './status.rb'
@@ -32,36 +29,25 @@ end
 
 def ideal_guess(status)
   words = status.possible_words
-  all_words_letters = words.map(&:chars).reduce(&:|)
+  filter_letters = words.map(&:chars).flatten | ["t","a","o","i"]
   # make sure possible words are first in the list as they are more likely to succeed
-  extended_list = (words + words_containing_letters_in(all_words_letters | ["e","t","a","o","i","n","s"], $full_list)).uniq
+  extended_list = (words + words_containing_letters_in(filter_letters, $full_list)).uniq
 
-  scores = {}
+  min = words.count * words.count
+  best = nil
   extended_list.each do |word|
     score = 0
-    min = scores.values.min || words.count * words.count
-    groups = {}
+    result_counts = {}
     words.each do |answer_word|
       result = status.test(word, answer_word)
-      groups[result] ||= 0
-      groups[result] += 1
-      score += groups[result] * 2 - 1
+      result_counts[result] = result_counts[result].to_i + 1
+      score += result_counts[result] * 2 - 1
       break if score > min
     end
-    scores[word] = score
+    min, best = score, word if score < min
     break if score <= words.count && words.include?(word)
   end
-  best_score = scores.values.min
-  best_words = scores.select {|k,v| v == best_score}.map {|t| t.first}
-  best_words = best_words.sort_by {|w| -w.chars.uniq.count}
-
-  best_words
-
-  # was worse
-#  best_words_that_are_a_possible = best_words & words
-#  chosen_words = best_words_that_are_a_possible + best_words
-#  puts "IDEAL #{scores.sort_by{|k,v| v}.map {|k,v| "#{k}:#{v}"}[0..9].join(" ")}"
-#  chosen_words
+  best
 end
 
 
@@ -87,16 +73,15 @@ def run_word_list(w_list)
     # first guess, always the same
     guesses = 1
     guess = $initial_guess
-    do_guess(status, guess, theword)
+    result = do_guess(status, guess, theword)
         
-    result = "-----"
     while(result != "xxxxx") do
       guesses += 1
       words = status.possible_words
       
       guess = cached(cache, status) do |status|
         if words.count > 2
-          ideal_guess(status).first
+          ideal_guess(status)
         else
           words.first
         end
@@ -124,8 +109,8 @@ else
   w_list = $w_list
 end
 
-if w_list.count <= 5
-  stats = run_word_list(ARGV)
+if true #w_list.count <= 5
+  stats = run_word_list(w_list)
   stats.final_report
   exit
 end

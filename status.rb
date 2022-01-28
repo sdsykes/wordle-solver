@@ -121,15 +121,16 @@ class Status
   end
   
   def words_not_containing_letters(letters, words)
-    words.grep(Regexp.new("[^#{letters.join}]{5}"))
-#    found_words = words
-#    letters.each {|c| found_words = found_words.select{|w| !w.include?(c)}}
+#    words.grep(Regexp.new("[^#{letters.join}]{5}"))
+    found_words = words
+    letters.each {|c| found_words = found_words.select{|w| !w.include?(c)}}
+
 #    if x != found_words
 #      p x
 #      p found_words
 #      exit
 #    end
-#    found_words
+    found_words
   end
   
   def _possible_words
@@ -159,8 +160,7 @@ class Status
   
   # returns all possible words at this point, first in array is the best one to guess
   def possible_words
-    return @possible_words_cache if @possible_words_cache
-    @possible_words_cache = _possible_words
+    @possible_words_cache or @possible_words_cache = _possible_words
   end
   
   def test(word, theword)
@@ -193,7 +193,7 @@ class Status
     str = ""
     letters.each do |letter, letter_status|
       ls = letter_status
-      str << "#{ls[:included]} #{ls[:not_pos].join(" ")} #{ls[:right_pos].join(" ")} #{ls[:maxed]}"
+      str << "-#{letter}I#{ls[:included]}N#{ls[:not_pos].join(" ")}R#{ls[:right_pos].join(" ")}M#{ls[:maxed]}"
     end
     str.hash
   end
