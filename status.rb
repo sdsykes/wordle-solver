@@ -15,20 +15,7 @@ class Status
     @possible_words_cache = nil
     @prev_possible_words = nil
   end
-  
-  def dup
-    status = Status.new
-    status.letters = Marshal.load(Marshal.dump(@letters))
-#    $alphabet.each do |letter|
-#      status.letters[letter] = @letters[letter].dup
-#      status.letters[letter][:not_pos] = @letters[letter][:not_pos].dup
-#      status.letters[letter][:right_pos] = @letters[letter][:right_pos].dup
-#    end
-    status.possible_words_cache = @possible_words_cache
-    status.prev_possible_words = @prev_possible_words
-    status
-  end
-  
+    
   def add_guess(guess, result)
     prev_letters = @letters.dup
 
@@ -168,10 +155,6 @@ class Status
     end
     
     words
-  end
-  
-  def possible_words_count
-    _possible_words.count
   end
   
   # returns all possible words at this point, first in array is the best one to guess

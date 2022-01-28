@@ -34,46 +34,7 @@ def ideal_guess(status)
   words = status.possible_words
   all_words_letters = words.map(&:chars).reduce(&:|)
   # make sure possible words are first in the list as they are more likely to succeed
-  extended_list = (words + words_containing_letters_in(all_words_letters | ["e","t","a","o","i"], $full_list)).uniq
-# e t
-#  2: 55
-#  3: 1119
-#  4: 1088
-#  5: 53
-#  6: 0
-# e t a
-#  2: 55
-#  3: 1120
-#  4: 1093
-#  5: 47
-#  6: 0
-# e t a o
-#  2: 55
-#. 3: 1120
-#. 4: 1094
-#. 5: 46
-#. 6: 0
-# e t a o i
-# 2: 55
-# 3: 1119
-# 4: 1096
-# 5: 45
-# 6: 0
-# e t a o i n
-#same
-# e t a o i n s
-#same
-# full
-# 2: 46
-# 3: 1056
-# 4: 1167
-# 5: 45
-# 6: 1
-# e t a o r
-# 2: 55
-# 3: 1120
-# 4: 1094
-# 5: 46
+  extended_list = (words + words_containing_letters_in(all_words_letters | ["e","t","a","o","i","n","s"], $full_list)).uniq
 
   scores = {}
   extended_list.each do |word|
@@ -81,53 +42,28 @@ def ideal_guess(status)
     min = scores.values.min || words.count * words.count
     groups = {}
     words.each do |answer_word|
-#      _status = status.dup
       result = status.test(word, answer_word)
       groups[result] ||= 0
       groups[result] += 1
-#      _status.add_guess(word, result)
-#      new_word_count = _status.possible_words_count
-#      score += new_word_count
-#      break if score > min
+      score += groups[result] * 2 - 1
+      break if score > min
     end
-#    scores[word] = score
-    scores[word] = groups.values.sum{|v| v * v} #.to_f / groups.values.sum #- (words.include?(word) ? 0.01 : 0)
-
-#    break if score <= words.count && words.include?(word)
-
-    break if scores[word] <= words.count && words.include?(word)
+    scores[word] = score
+    break if score <= words.count && words.include?(word)
   end
   best_score = scores.values.min
   best_words = scores.select {|k,v| v == best_score}.map {|t| t.first}
-  #  2: 56
-  #  3: 1122
-  #  4: 1084
-  #  5: 52
-  #  6: 1
   best_words = best_words.sort_by {|w| -w.chars.uniq.count}
-#    2: 55
-#    3: 1119
-#    4: 1088
-#    5: 53
-#    6: 0
 
   best_words
 
+  # was worse
 #  best_words_that_are_a_possible = best_words & words
 #  chosen_words = best_words_that_are_a_possible + best_words
-#    2: 56
-#    3: 1122
-#    4: 1083
-#    5: 54
-#    6: 0
 #  puts "IDEAL #{scores.sort_by{|k,v| v}.map {|k,v| "#{k}:#{v}"}[0..9].join(" ")}"
 #  chosen_words
 end
 
-
-#Bad words: bevel blown bunch bunny cheer chili croup daddy daunt ember expel ferry fewer fiber fight filly finch 
-#finer folly freak freed freer fried fudge fully funny fuzzy giddy golly goner happy hyper jaunt jazzy jiffy 
-#jolly lucky mammy nanny never ninny parer patch perky picky pluck poker pouch proxy puppy shelf tatty taunt wafer witty wound
 
 def do_guess(status, guess, theword, comment = nil)
   puts [guess, comment].join(" ")
@@ -162,7 +98,7 @@ def run_word_list(w_list)
         if words.count > 2
           ideal_guess(status).first
         else
-          words.last
+          words.first
         end
       end
 
