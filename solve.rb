@@ -28,7 +28,7 @@ def do_guess(guess, status, tester, secret_word, comment = nil)
   result
 end
 
-def solve(list)
+def solve(list, all_answers, all_allowed_guesses)
   stats = Stats.new
   cache = Cache.new
   tester = Tester.new
@@ -37,9 +37,9 @@ def solve(list)
   list.each do |secret_word|
     status = Status.new
   
-    guess = guesser.guess(W_LIST, [INITIAL_GUESS], status)
+    guess = guesser.guess(all_answers, [INITIAL_GUESS], status)
     result = do_guess(guess, status, tester, secret_word)
-    word_list = FULL_LIST
+    word_list = all_allowed_guesses
 
     while(result != "xxxxx") do
       possible_words = status.possible_words
@@ -53,16 +53,11 @@ def solve(list)
   
     stats.update(status.guess_count)
     stats.report
-    stats.bad_words << secret_word if status.guess_count >= 5
+    stats.hard_words << secret_word if status.guess_count >= 5
   end
   stats
 end
 
-if !ARGV.empty?
-  w_list = ARGV
-else
-  w_list = W_LIST
-end
-
-stats = solve(w_list)
+to_solve = ARGV.empty? ? W_LIST : ARGV
+stats = solve(to_solve, W_LIST, FULL_LIST)
 stats.final_report
