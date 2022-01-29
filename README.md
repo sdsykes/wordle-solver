@@ -8,7 +8,7 @@ Usage
 ruby solve.rb [wordlist]
 ```
 
-##Results
+## Results
 
 The solver solves all puzzles in 5 guesses or less. Here are the stats for each number of guesses (for all 2315 possible puzzles)
 
@@ -25,11 +25,11 @@ The solver solves all puzzles in 5 guesses or less. Here are the stats for each 
 Average guesses: 3.4816414686825055
 ```
 
-##Algorithm
+## Algorithm
 
 The solver works out the next guess by choosing the word that results in, on average, fewest possible words for the next guess.
 It does this by checking the results for all possible answers, and checking the average number of words that are the result of the same score (where by score I mean the number and placement of green/yellow/grey letters).
 
-##Speed
+## Speed
 
 The solver runs all 2315 possible puzzles in about 18.5s on my MacBook Air.
