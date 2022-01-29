@@ -25,9 +25,4 @@ class Stats
     puts "Average guesses: #{@counts.sum{|k,v| k * v} / @counts.values.sum.to_f}"
     puts "Bad words: #{bad_words.join(" ")}"
   end
-  
-  def add(other)
-    1.upto(6) {|n| @counts[n] += other.counts[n]}
-    @bad_words += other.bad_words
-  end
 end
