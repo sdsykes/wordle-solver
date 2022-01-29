@@ -46,7 +46,7 @@ def solve(list, all_answers, all_allowed_guesses)
       word_list = guesser.next_word_list(possible_words, word_list)
       guess = guesser.guess(possible_words, word_list, status)
 
-      raise "NO WORDS LEFT (#{secret_word})" if guess.nil? 
+      raise "NO WORDS LEFT (#{secret_word})" if guess.nil?
       
       result = do_guess(guess, status, tester, secret_word, "(#{possible_words.count} #{possible_words.join(" ")})")
     end
@@ -58,6 +58,47 @@ def solve(list, all_answers, all_allowed_guesses)
   stats
 end
 
-to_solve = ARGV.empty? ? W_LIST : ARGV
-stats = solve(to_solve, W_LIST, FULL_LIST)
-stats.final_report
+def do_interactive_guess(guess, status)
+  puts guess
+  result = $stdin.gets.chomp
+  while result !~ /^[ox-]{5}$/
+    puts "Bad result string, must match ^[-ox]{5}$"
+    result = $stdin.gets.chomp
+  end
+  status.add_result(result)
+  result
+end
+
+def interactive_solve(all_answers, all_allowed_guesses)
+  cache = Cache.new
+  tester = Tester.new
+  guesser = Guesser.new(cache: cache, tester: tester)
+  status = Status.new
+  
+  guess = guesser.guess(all_answers, [INITIAL_GUESS], status)
+  result = do_interactive_guess(guess, status)
+  word_list = all_allowed_guesses
+
+  while(result != "xxxxx") do
+    possible_words = status.possible_words
+
+    raise "NO POSSIBLE WORDS" if possible_words.nil?
+
+    if possible_words.count == 1 # shortcut when game is won
+      puts possible_words[0], "xxxxx"
+      return
+    end
+
+    word_list = guesser.next_word_list(possible_words, word_list)
+    guess = guesser.guess(possible_words, word_list, status)
+    result = do_interactive_guess(guess, status)
+  end
+end
+
+if ARGV[0] == "-i"
+  interactive_solve(W_LIST, FULL_LIST)
+else
+  to_solve = ARGV.empty? ? W_LIST : ARGV
+  stats = solve(to_solve, W_LIST, FULL_LIST)
+  stats.final_report
+end

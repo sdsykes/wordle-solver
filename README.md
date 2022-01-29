@@ -1,12 +1,15 @@
 # Wordle solver
 
-This code finds an efficient way to solve every possible wordle puzzle, or a list of puzzles passed to it. The wordlist passed to the solver should contain puzzle answers that are contained in the list in the file wlist.
+This code finds an efficient way to solve every possible wordle puzzle, or a list of puzzles passed to it. The wordlist passed to the solver should contain puzzle answers that are contained in the file wlist.
 
 Usage
 
 ```
-ruby solve.rb [wordlist]
+ruby solve.rb [-i | wordlist]
 ```
+
+Pass -i to enter interactive mode.
+Scores are entered like ```-x-oo``` where x indicates an exact match, and o indicates a incorrectly placed match.
 
 ## Results
 
@@ -27,8 +30,7 @@ Average guesses: 3.4816414686825055
 
 ## Algorithm
 
-The solver works out the next guess by choosing the word that results in, on average, fewest possible words for the next guess.
-It does this by checking the results for all possible answers, and checking the average number of words that are the result of the same score (where by score I mean the number and placement of green/yellow/grey letters).
+The solver works out the next guess by choosing the word that results in, on average (after checking all possible solutions), fewest solution word possibilities in the next round.
 
 ## Speed
 
