@@ -46,7 +46,7 @@ def solve(list)
       word_list = guesser.next_word_list(possible_words, word_list)
       guess = guesser.guess(possible_words, word_list, status)
 
-      raise "NO WORDS LEFT (#{theword})" if guess.nil? 
+      raise "NO WORDS LEFT (#{secret_word})" if guess.nil? 
       
       result = do_guess(guess, status, tester, secret_word, "(#{possible_words.count} #{possible_words.join(" ")})")
     end
