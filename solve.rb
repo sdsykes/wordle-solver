@@ -29,25 +29,30 @@ end
 
 def ideal_guess(status)
   words = status.possible_words
+#  return words.first if words.count <= 2
+  
   filter_letters = words.map(&:chars).flatten | ["t","a","o","i"]
   # make sure possible words are first in the list as they are more likely to succeed
   extended_list = (words + words_containing_letters_in(filter_letters, $full_list)).uniq
-
-  min = words.count * words.count
+  
+  min = words.count * words.count + 1
+  resulting_words = {}
   best = nil
   extended_list.each do |word|
     score = 0
-    result_counts = {}
+    result_words = {}
     words.each do |answer_word|
       result = status.test(word, answer_word)
-      result_counts[result] = result_counts[result].to_i + 1
-      score += result_counts[result] * 2 - 1
+      result_words[result] = (result_words[result] || []) << answer_word
+      score += result_words[result].count * 2 - 1
       break if score > min
     end
-    min, best = score, word if score < min
+    # send the result_words to the status, it can use them to find possible words when next guess is scored
+    min, best, resulting_words = score, word, result_words if score < min
     break if score <= words.count && words.include?(word)
   end
-  best
+
+  return best, resulting_words
 end
 
 
@@ -60,45 +65,35 @@ def do_guess(status, guess, theword, comment = nil)
 end
 
 def cached(cache, status)
-  cache[status.hash] or cache[status.hash] = yield(status)
+  cache[status.hash] or cache[status.hash] = yield
 end
 
 def run_word_list(w_list)
   stats = Stats.new
-  cache = {} # speed up second guess
+  cache = {}
   
   w_list.each do |theword|
     status = Status.new
   
-    # first guess, always the same
     guesses = 1
-    guess = $initial_guess
+    guess, resulting_words = cached(cache, status) {ideal_guess(status)}
+    status.prev_resulting_words = resulting_words
     result = do_guess(status, guess, theword)
-        
+
     while(result != "xxxxx") do
       guesses += 1
       words = status.possible_words
-      
-      guess = cached(cache, status) do |status|
-        if words.count > 2
-          ideal_guess(status)
-        else
-          words.first
-        end
-      end
+      guess, resulting_words = cached(cache, status) {ideal_guess(status)}
+      status.prev_resulting_words = resulting_words
 
-      if guess.nil? # this should never happen
-        puts "NO WORDS LEFT (#{theword})"
-        pp status.letters
-        exit 1
-      end
+      raise "NO WORDS LEFT (#{theword})" if guess.nil? 
       
       result = do_guess(status, guess, theword, "(#{words.count} #{words.join(" ")})")
     end
   
     stats.update(guesses)
     stats.report
-    stats.bad_words << theword if guesses >= 5 # check and fix any failure to win
+    stats.bad_words << theword if guesses >= 5
   end
   stats
 end
@@ -109,11 +104,10 @@ else
   w_list = $w_list
 end
 
-if true #w_list.count <= 5
-  stats = run_word_list(w_list)
-  stats.final_report
-  exit
-end
+stats = run_word_list(w_list)
+stats.final_report
+exit
+
 
 process_count = 8
 lists = w_list.each_slice(w_list.count / process_count + 1).to_a

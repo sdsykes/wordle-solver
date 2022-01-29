@@ -1,6 +1,6 @@
 class Status
   attr_accessor :letters
-  attr_writer :possible_words_cache, :prev_possible_words
+  attr_writer :possible_words_cache, :prev_resulting_words, 
   
   def initialize
     @letters = {}
@@ -14,6 +14,7 @@ class Status
     end
     @possible_words_cache = nil
     @prev_possible_words = nil
+    @prev_resulting_words = {}
   end
     
   def add_guess(guess, result)
@@ -47,7 +48,7 @@ class Status
     end
     
     @prev_possible_words = @possible_words_cache
-    @possible_words_cache = nil
+    @possible_words_cache = @prev_resulting_words[result]
   end
   
   def unused_letters
@@ -121,15 +122,8 @@ class Status
   end
   
   def words_not_containing_letters(letters, words)
-#    words.grep(Regexp.new("[^#{letters.join}]{5}"))
     found_words = words
     letters.each {|c| found_words = found_words.select{|w| !w.include?(c)}}
-
-#    if x != found_words
-#      p x
-#      p found_words
-#      exit
-#    end
     found_words
   end
   

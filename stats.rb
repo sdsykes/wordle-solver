@@ -1,12 +1,10 @@
 class Stats
   attr_reader :counts
   attr_reader :bad_words
-  attr_accessor :bad_pairs
   
   def initialize
     @counts = {1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0}
     @bad_words = []
-    @bad_pairs = []
   end
   
   def update(guesses)
@@ -26,12 +24,10 @@ class Stats
     1.upto(6) {|n| puts "#{n}: #{@counts[n]}"}
     puts "Average guesses: #{@counts.sum{|k,v| k * v} / @counts.values.sum.to_f}"
     puts "Bad words: #{bad_words.join(" ")}"
-    puts "Pairs: #{bad_pairs.count}"
   end
   
   def add(other)
     1.upto(6) {|n| @counts[n] += other.counts[n]}
     @bad_words += other.bad_words
-    @bad_pairs += other.bad_pairs
   end
 end
