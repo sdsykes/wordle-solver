@@ -1,27 +1,25 @@
 class Tester
-  def test(word, theword)
-    test_word = word.dup
-    secret_word = theword.dup
-    n = 0
+  def test(word, secret_word)
     result = "-----"
-    test_word.each_char do |letter|
-      if secret_word[n] == letter
+    test_word = word.chars
+    answer_word = secret_word.chars
+
+    0.upto(4) do |n|
+      if test_word[n] == answer_word[n]
         result[n] = "x"
-        secret_word[n] = "."
-        test_word[n] = "*"
+        answer_word[n] = nil
+        test_word[n] = false
       end
-      n += 1
     end
-  
-    n = 0
-    test_word.each_char do |letter|
-      i = secret_word.index(letter)
+
+    0.upto(4) do |n|
+      i = answer_word.index(test_word[n])
       if i
         result[n] = "o"
-        secret_word[i] = "."
+        answer_word[i] = nil
       end
-      n += 1
     end
+
     result
   end
 end
