@@ -34,4 +34,7 @@ The solver works out the next guess by choosing the word that results in, on ave
 
 ## Speed
 
-The solver runs all 2315 possible puzzles in about 18.5s on my MacBook Air.
+The solver runs all 2315 possible puzzles in about 13.5s on my MacBook Air (Ruby 3.1.0).
+
+The solver is quite optimised, with caching in apprioriate places. One thing that didn't work is caching/memoizing the results of Tester#test, which is the most called piece of code of all. The cost of writing to the cache hash was greater than the benefit of the cached results, and it made things slower.
+
