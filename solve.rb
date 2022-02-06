@@ -36,7 +36,7 @@ def solve(list, all_answers, all_allowed_guesses)
   
   list.each do |secret_word|
     status = Status.new
-  
+
     guess = guesser.guess(all_answers, [INITIAL_GUESS], status)
     result = do_guess(guess, status, tester, secret_word)
     word_list = all_allowed_guesses

@@ -1,5 +1,5 @@
 class Guesser
-  FILTER_EXTRA_LETTERS = ["t","a","o","i"].freeze
+  FILTER_EXTRA_LETTERS = ["a", "o", "i", "y"].freeze
   
   def initialize(cache:, tester:)
     @cache = cache
@@ -38,7 +38,9 @@ class Guesser
   end
   
   def next_word_list(possible_words, dictionary)
-    @cache.cached(possible_words.hash) do
+    return possible_words if possible_words.count < 3
+
+    @cache.cached(possible_words) do
       filter_letters = possible_words.map(&:chars).flatten | FILTER_EXTRA_LETTERS
       (possible_words + words_containing_letters_in(filter_letters, dictionary)).uniq
     end
